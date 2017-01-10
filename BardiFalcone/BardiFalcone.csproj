@@ -44,7 +44,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Calculate.cs" />
-    <Compile Include="ControlSet.cs" />
+    <Compile Include="ControlSet\BoundaryControlSet.cs" />
+    <Compile Include="ControlSet\CircleControlSet.cs" />
+    <Compile Include="ControlSet\IControlSet.cs" />
+    <Compile Include="ControlSet\PointControlSet.cs" />
+    <Compile Include="ControlSet\RectangularControlSet.cs" />
+    <Compile Include="ControlSet\RingControlSet.cs" />
     <Compile Include="DataToSerialize.cs" />
     <Compile Include="Face.cs" />
     <Compile Include="FailureSet\EmptyFailureSet.cs" />
@@ -53,7 +58,11 @@
     <Compile Include="Grid.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="FailureSet\IFailureSet.cs" />
-    <Compile Include="Parameter.cs" />
+    <Compile Include="Parameters\ControlSetParameter.cs" />
+    <Compile Include="Parameters\ControlSetType.cs" />
+    <Compile Include="Parameters\FunctionType.cs" />
+    <Compile Include="Parameters\GridParameters.cs" />
+    <Compile Include="Parameters\GameParameters.cs" />
     <Compile Include="Point.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Run.cs" />

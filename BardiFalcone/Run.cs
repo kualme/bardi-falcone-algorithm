@@ -10,6 +10,8 @@ using System.Runtime.Serialization;
 using BardiFalcone.TerminalSet;
 using BardiFalcone.FailureSet;
 using System.Diagnostics;
+using BardiFalcone.ControlSet;
+using BardiFalcone.Parameters;
 
 namespace BardiFalcone
 {
@@ -133,7 +135,7 @@ namespace BardiFalcone
                 return u + v;
             };
 
-            UseParameters(function, controlSet1, controlSet2, terminalSet, FILENAME_SIMPLE);         
+            UseParameters(function, terminalSet, FILENAME_SIMPLE);         
         }
 
         /// <summary>
@@ -149,7 +151,7 @@ namespace BardiFalcone
                 return u + v;
             };
 
-            UseParameters(function, controlSet1, controlSet2, terminalSet, FILENAME_SIMPLE_ROUND);
+            UseParameters(function, terminalSet, FILENAME_SIMPLE_ROUND);
         }
 
         /// <summary>
@@ -171,7 +173,7 @@ namespace BardiFalcone
                 return new Point(coord, true);
             };
 
-            UseParameters(function, controlSet1, controlSet2, terminalSet, FILENAME_MATERIAL_POINT);
+            UseParameters(function, terminalSet, FILENAME_MATERIAL_POINT);
         }
 
         /// <summary>
@@ -191,7 +193,7 @@ namespace BardiFalcone
                 return new Point(coord, true);
             };
 
-            UseParameters(function, controlSet1, controlSet2, terminalSet, FILENAME_MATERIAL_POINT);
+            UseParameters(function, terminalSet, FILENAME_MATERIAL_POINT);
         }
 
         /// <summary>
@@ -211,7 +213,7 @@ namespace BardiFalcone
                 return new Point(coord, true);
             };
 
-            UseParameters(function, controlSet1, controlSet2, terminalSet, FILENAME_PENDULUM);
+            UseParameters(function, terminalSet, FILENAME_PENDULUM);
         }
 
         /// <summary>
@@ -230,7 +232,7 @@ namespace BardiFalcone
                 return new Point(coord, true);
             };
 
-            UseParameters(function, controlSet1, controlSet2, terminalSet, FILENAME_CHAUFFEUR);
+            UseParameters(function, terminalSet, FILENAME_CHAUFFEUR);
         }
 
         /// <summary>
@@ -249,7 +251,7 @@ namespace BardiFalcone
                 return new Point(coord, true);
             };
 
-            UseParameters(function, controlSet1, controlSet2, terminalSet, FILENAME_CHAUFFEUR_FALCONE);
+            UseParameters(function, terminalSet, FILENAME_CHAUFFEUR_FALCONE);
         }
 
         /// <summary>
@@ -270,7 +272,7 @@ namespace BardiFalcone
                 return new Point(coord, true);
             };
 
-            UseParameters(function, controlSet1, controlSet2, terminalSet, FILENAME_3D_MATERIAL_POINT);
+            UseParameters(function, terminalSet, FILENAME_3D_MATERIAL_POINT);
         }
 
         /// <summary>
@@ -291,7 +293,7 @@ namespace BardiFalcone
                 return new Point(coord, true);
             };
 
-            UseParameters(function, controlSet1, controlSet2, terminalSet, FILENAME_DUBINS_CAR);
+            UseParameters(function, terminalSet, FILENAME_DUBINS_CAR);
         }
 
         /// <summary>
@@ -311,7 +313,7 @@ namespace BardiFalcone
                 return new Point(coord, true);
             };
 
-            UseParameters(function, controlSet1, controlSet2, terminalSet, FILENAME_2D_DUBINS_CAR);
+            UseParameters(function, terminalSet, FILENAME_2D_DUBINS_CAR);
         }
 
         /// <summary>
@@ -361,7 +363,7 @@ namespace BardiFalcone
                 return new Point(coord, true);
             };
 
-            UseParameters(function, controlSet1, controlSet2, terminalSet, FILENAME_TAD_PROBLEM, failureSet);
+            UseParameters(function, terminalSet, FILENAME_TAD_PROBLEM, failureSet);
         }
 
         /// <summary>
@@ -369,22 +371,14 @@ namespace BardiFalcone
         /// </summary>
         /// <param name="filename">Имя файла с параметрами задачи</param>
         /// <returns></returns>
-        private static List<Parameter> GetParameters(string filename)
+        private static GameParameters GetParameters(string filename)
         {
-            List<Parameter> parameters = new List<Parameter>(0);
-            XmlSerializer serializer = new XmlSerializer(typeof(List<Parameter>));
-            try
+            XmlSerializer serializer = new XmlSerializer(typeof(GameParameters));            
+            using (XmlReader reader = XmlReader.Create(filename))
             {
-                using (XmlReader reader = XmlReader.Create(filename))
-                {
-                    parameters = (List<Parameter>)serializer.Deserialize(reader);
-                }
-            }
-            catch (FileNotFoundException ex)
-            {
-                Console.WriteLine("File {0} is not found. Starting program with default parameters.", ex.FileName);
-            }
-            return parameters;
+                var parameters = (GameParameters)serializer.Deserialize(reader);
+                return parameters;
+            }           
         }
 
         /// <summary>
@@ -395,22 +389,39 @@ namespace BardiFalcone
         /// <param name="controlSet1">Множество управлений первого игрока</param>
         /// <param name="controlSet2">Множество управлений второго игрока</param>
         /// <param name="terminalSet">Терминальное множество</param>
-        private static void UseParameters(Function.function function, IControlSet controlSet1, IControlSet controlSet2, ITerminalSet terminalSet, string filename, IFailureSet failureSet = null)
+        private static void UseParameters(Function.function function, ITerminalSet terminalSet, string filename, IFailureSet failureSet = null)
         {
-            List<Parameter> parameters = GetParameters(filename);
+            var parameters = GetParameters(filename);
+            var controlSetU = MakeControlSet(parameters.U);
+            var controlSetV = MakeControlSet(parameters.V);
+            Initialization(parameters, function, controlSetU, controlSetV, terminalSet, failureSet);
 
-            if (parameters.Count > 0)
-                foreach (Parameter parameter in parameters)
-                {        
-                    Initialization(parameter, function, controlSet1, controlSet2, terminalSet, failureSet);
-                }
-            else Initialization(new Parameter()
+            //else Initialization(new GameParameters()
+            //{
+            //    TimeStep = 0.5,
+            //    Iter = 11,
+            //    SizeOfBox = new double[] { 0.25, 0.25 },
+            //    SaveIter = 1
+            //}, function, controlSet1, controlSet2, terminalSet, failureSet);
+        }
+
+        private static IControlSet MakeControlSet(ControlSetParameter parameters)
+        {
+            switch (parameters.Type)
             {
-                TimeStep = 0.5,
-                Iter = 11,
-                SizeOfBox = new double[] { 0.25, 0.25 },
-                SaveIter = 1
-            }, function, controlSet1, controlSet2, terminalSet, failureSet);
+                case "Circle":
+                    return new CircleControlSet(parameters.Start, parameters.End, parameters.Step);
+                case "Boundary":
+                    return new BoundaryControlSet(parameters.Start, parameters.End, parameters.Step);
+                case "Point":
+                    return new PointControlSet(parameters.Point);
+                case "Rectangular":
+                    return new RectangularControlSet(parameters.Start, parameters.End, parameters.Step);
+                case "Ring":
+                    return new RingControlSet(parameters.Center, parameters.Radius, parameters.Step);
+                default:
+                    return new PointControlSet(new Point(new double[] { 0 }));
+            }            
         }
 
         /// <summary>
@@ -421,11 +432,11 @@ namespace BardiFalcone
         /// <param name="controlSet1">Множество управлений первого игрока</param>
         /// <param name="controlSet2">Множество управлений второго игрока</param>
         /// <param name="terminalSet">Терминальное множество</param>
-        private static void Initialization(Parameter parameter, Function.function function, IControlSet controlSet1, IControlSet controlSet2, ITerminalSet terminalSet, IFailureSet failureSet = null)
+        private static void Initialization(GameParameters parameter, Function.function function, IControlSet controlSet1, IControlSet controlSet2, ITerminalSet terminalSet, IFailureSet failureSet = null)
         {               
-            double[] sizeOfBox = new double[parameter.SizeOfBox.Length];
-            parameter.SizeOfBox.CopyTo(sizeOfBox, 0);            
-            Grid grid = new Grid(parameter.SizeOfDomain, sizeOfBox, parameter.InitialPoint, terminalSet);
+            double[] sizeOfBox = new double[parameter.GridParameters.SizeOfBox.Length];
+            parameter.GridParameters.SizeOfBox.CopyTo(sizeOfBox, 0);            
+            Grid grid = new Grid(parameter.GridParameters.SizeOfDomain, sizeOfBox, parameter.GridParameters.InitialPoint, terminalSet);
                                   
             Compute worker = new Compute(grid:          grid,
                                          function:      function,
@@ -433,7 +444,7 @@ namespace BardiFalcone
                                          controlSet2:   controlSet2,
                                          terminalSet:   terminalSet,
                                          iters:         parameter.Iter,
-                                         timeStep:      parameter.TimeStep,
+                                         timeStep:      parameter.GridParameters.TimeStep,
                                          saveIter:      parameter.SaveIter,
                                          failureSet:    failureSet,
                                          folderName:    parameter.FolderName);

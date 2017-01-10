@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Text;
 using BardiFalcone.TerminalSet;
 using BardiFalcone.FailureSet;
+using BardiFalcone.ControlSet;
 
 namespace BardiFalcone
 {
